@@ -1372,7 +1372,9 @@ function buildPDF(type, docNum) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const prefix = type === 'estimate' ? 'est' : 'inv';
-  const sym = config.currency_symbol;
+  // jsPDF's built-in Helvetica cannot render ₹ — substitute with Rs. for clean PDF output
+  const rawSym = config.currency_symbol || '₹';
+  const sym = rawSym === '₹' ? 'Rs.' : rawSym;
   const W = 210;
   const MARGIN = 14;
   const COL_W = W - MARGIN * 2;
