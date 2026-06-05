@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Workshop App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f2ee;
+    --bg2: #ffffff;
+    --bg3: #f0ede8;
+    --bg4: #e8e4de;
+    --border: #ddd9d2;
+    --border2: #ccc8c0;
+    --amber: #c8760a;
+    --amber-dim: #a85f06;
+    --amber-glow: rgba(200,118,10,0.10);
+    --amber-glow2: rgba(200,118,10,0.05);
+    --text: #1a1714;
+    --text2: #5a5550;
+    --text3: #9a9590;
+    --red: #c0392b;
+    --red-dim: #fdecea;
+    --green: #1e7e4a;
+    --green-dim: #e6f4ec;
+    --mono: 'Share Tech Mono', monospace;
+    --head: 'Barlow Condensed', sans-serif;
+    --body: 'Barlow', sans-serif;
+    --radius: 6px;
+    --tab-h: 56px;
+    --header-h: 60px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── LAYOUT ─────────────────────────────── */
+  #app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+  #app-header {
+    height: var(--header-h);
+    background: #2a1f14;
+    border-bottom: 3px solid var(--amber);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  #app-header::after {
+    content: '';
+    position: absolute; bottom: -6px; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, var(--amber), transparent 60%);
+    opacity: 0.3;
+  }
+
+  .header-brand {
+    display: flex; align-items: center; gap: 10px;
+    min-width: 0;
+  }
+  #header-logo {
+    width: 36px; height: 36px;
+    object-fit: contain;
+    border-radius: 4px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    display: none;
+    flex-shrink: 0;
+  }
+  #header-logo.loaded { display: block; }
+
+  .header-name {
+    font-family: var(--head);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .header-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--amber);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  /* ─── TABS ────────────────────────────────── */
+  #tab-bar {
+    height: var(--tab-h);
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-shrink: 0;
+  }
+  .tab-btn {
+    flex: 1;
+    background: none; border: none;
+    color: var(--text3);
+    font-family: var(--head);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+  }
+  .tab-btn .tab-icon { font-size: 17px; }
+  .tab-btn.active { color: var(--amber); }
+  .tab-btn.active::after {
+    content: '';
+    position: absolute; bottom: 0; left: 10%; right: 10%;
+    height: 2px;
+    background: var(--amber);
+    border-radius: 2px 2px 0 0;
+  }
+  .tab-btn:not(.active):hover { color: var(--text2); }
+
+  /* ─── CONTENT ─────────────────────────────── */
+  #content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tab-panel { display: none; padding-bottom: 100px; }
+  .tab-panel.active { display: block; }
+
+  /* ─── SECTIONS ────────────────────────────── */
+  .section {
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px;
+  }
+  .section-title {
+    font-family: var(--head);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ─── INPUTS ──────────────────────────────── */
+  .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .input-grid.full { grid-template-columns: 1fr; }
+
+  .input-group { display: flex; flex-direction: column; gap: 5px; }
+  .input-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    color: var(--text3);
+    text-transform: uppercase;
+  }
+  input[type=text], input[type=number], input[type=date], textarea, select {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 14px;
+    padding: 9px 11px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--amber);
+    background: var(--bg4);
+  }
+  input[type=date] { color-scheme: light; }
+  textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+
+  /* ─── SEARCH BAR ──────────────────────────── */
+  .search-wrap {
+    position: relative;
+    margin-bottom: 12px;
+  }
+  .search-icon {
+    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+    color: var(--text3); font-size: 16px; pointer-events: none;
+  }
+  .search-wrap input {
+    padding-left: 36px;
+    font-size: 15px;
+    background: var(--bg3);
+    border-color: var(--border2);
+  }
+  .search-wrap input:focus { border-color: var(--amber); }
+
+  /* ─── CATEGORY CHIPS ──────────────────────── */
+  .chips-scroll {
+    display: flex; gap: 7px; overflow-x: auto;
+    padding-bottom: 2px; margin-bottom: 12px;
+    scrollbar-width: none;
+  }
+  .chips-scroll::-webkit-scrollbar { display: none; }
+  .chip {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 13px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.3px;
+  }
+  .chip:hover { border-color: var(--amber-dim); color: var(--text); }
+  .chip.active {
+    background: var(--amber-glow);
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+
+  /* ─── PARTS LIST ──────────────────────────── */
+  .parts-list { display: flex; flex-direction: column; gap: 1px; }
+  .category-header {
+    font-family: var(--head);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 8px 4px 4px;
+    margin-top: 4px;
+  }
+  .part-row {
+    display: flex; align-items: center;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    gap: 10px;
+    margin-bottom: 3px;
+    transition: background 0.1s;
+  }
+  .part-row:active { background: var(--bg3); }
+  .part-info { flex: 1; min-width: 0; }
+  .part-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .part-price {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--amber);
+    margin-top: 2px;
+  }
+  .btn-add {
+    background: var(--amber-glow);
+    border: 1px solid var(--amber-dim);
+    border-radius: 5px;
+    color: var(--amber);
+    font-family: var(--head);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 6px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .btn-add:hover { background: var(--amber); color: #fff; }
+  .btn-add.added {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text3);
+    cursor: default;
+    font-size: 11px;
+  }
+  .btn-add.added:hover { background: transparent; color: var(--text3); }
+
+  /* ─── CART / ESTIMATE LIST ───────────────── */
+  .cart-empty {
+    text-align: center;
+    color: var(--text3);
+    font-size: 13px;
+    padding: 20px;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+  }
+  .cart-item {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    gap: 0;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 4px;
+    overflow: hidden;
+  }
+  .cart-item-name {
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    min-width: 0;
+    align-self: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    grid-column: 1 / -1;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .cart-item-controls {
+    display: flex; align-items: center;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  .qty-btn {
+    width: 26px; height: 26px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.1s;
+    flex-shrink: 0;
+  }
+  .qty-btn:hover { border-color: var(--amber); color: var(--amber); }
+  .qty-input {
+    width: 38px; height: 26px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 14px;
+    padding: 0;
+    background: var(--bg4);
+    border-color: var(--border);
+  }
+  .cart-price {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--amber);
+  }
+  .cart-total-cell {
+    padding: 8px 10px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--amber);
+    align-self: center;
+    white-space: nowrap;
+  }
+  .btn-remove {
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    padding: 8px 12px;
+    font-size: 16px;
+    display: flex; align-items: center;
+    transition: color 0.15s;
+    border-left: 1px solid var(--border);
+  }
+  .btn-remove:hover { color: var(--red); background: var(--red-dim); }
+
+  /* Cart footer */
+  .cart-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 4px 4px;
+    border-top: 1px dashed var(--border2);
+    margin-top: 8px;
+  }
+  .total-label {
+    font-family: var(--head);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--text2);
+    text-transform: uppercase;
+  }
+  .total-amount {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--amber);
+    letter-spacing: 1px;
+  }
+
+  /* ─── LABOUR ROWS ─────────────────────────── */
+  .labour-row {
+    display: flex; gap: 8px; align-items: center;
+    margin-bottom: 6px;
+  }
+  .labour-row input:first-child { flex: 1; }
+  .labour-row input:nth-child(2) { width: 110px; flex-shrink: 0; font-family: var(--mono); }
+  .btn-icon {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text3);
+    cursor: pointer;
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .btn-icon:hover { color: var(--red); border-color: var(--red); background: var(--red-dim); }
+  .btn-add-labour {
+    background: var(--bg3);
+    border: 1px dashed var(--border2);
+    border-radius: var(--radius);
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+    margin-top: 4px;
+    transition: all 0.15s;
+  }
+  .btn-add-labour:hover { border-color: var(--amber); color: var(--amber); background: var(--amber-glow2); }
+
+  /* ─── TOTALS BREAKDOWN ───────────────────── */
+  .totals-breakdown {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .totals-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .totals-row:last-child { border-bottom: none; }
+  .totals-row.grand {
+    background: var(--amber-glow);
+    border-color: var(--amber-dim);
+  }
+  .totals-row-label {
+    font-size: 13px;
+    color: var(--text2);
+  }
+  .totals-row.grand .totals-row-label {
+    font-family: var(--head);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    color: var(--text);
+  }
+  .totals-row-value {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--text);
+  }
+  .totals-row.grand .totals-row-value {
+    font-size: 20px;
+    color: var(--amber);
+  }
+
+  /* ─── CUSTOM ITEM ─────────────────────────── */
+  .custom-item-row {
+    display: flex; gap: 8px; align-items: flex-end;
+    flex-wrap: wrap;
+  }
+  .custom-item-row .input-group:first-child { flex: 1; min-width: 150px; }
+  .custom-item-row .input-group:nth-child(2) { width: 110px; }
+  .custom-item-row .input-group:nth-child(2) input { font-family: var(--mono); }
+
+  /* ─── BUTTONS ─────────────────────────────── */
+  .btn-primary {
+    width: 100%;
+    background: var(--amber);
+    border: none;
+    border-radius: var(--radius);
+    color: #ffffff;
+    font-family: var(--head);
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: 4px;
+  }
+  .btn-primary:hover { background: var(--amber-dim); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-secondary {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--amber-dim);
+    border-radius: var(--radius);
+    color: var(--amber);
+    font-family: var(--head);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: 8px;
+  }
+  .btn-secondary:hover { background: var(--amber-glow); }
+
+  .btn-outline {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text2);
+    font-family: var(--head);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 9px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-outline:hover { border-color: var(--amber); color: var(--amber); }
+
+  /* ─── MODAL ───────────────────────────────── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex; align-items: flex-end; justify-content: center;
+    z-index: 100;
+    animation: fadeIn 0.15s ease;
+  }
+  .modal-overlay.center { align-items: center; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal-sheet {
+    background: var(--bg2);
+    border-top: 2px solid var(--amber);
+    border-radius: 14px 14px 0 0;
+    padding: 20px 20px 32px;
+    width: 100%;
+    max-width: 480px;
+    animation: slideUp 0.2s cubic-bezier(.16,1,.3,1);
+  }
+  .modal-sheet.center-modal {
+    border-radius: 12px;
+    margin: 16px;
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--amber);
+    animation: zoomIn 0.15s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes zoomIn { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .modal-handle {
+    width: 40px; height: 4px;
+    background: var(--border2);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+  .modal-title {
+    font-family: var(--head);
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .modal-sub {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .modal-actions { display: flex; flex-direction: column; gap: 10px; }
+  .modal-action-btn {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 15px;
+    font-weight: 500;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    width: 100%;
+    text-align: left;
+  }
+  .modal-action-btn:hover { border-color: var(--amber); background: var(--amber-glow2); }
+  .modal-action-icon { font-size: 22px; flex-shrink: 0; }
+  .modal-action-desc { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .modal-btn-row { display: flex; gap: 10px; margin-top: 6px; }
+  .modal-btn-row .btn-outline { flex: 1; }
+  .modal-cancel {
+    background: none; border: none;
+    color: var(--text3); font-size: 14px;
+    padding: 12px; cursor: pointer;
+    text-align: center; width: 100%;
+    margin-top: 4px;
+  }
+
+  /* ─── ERROR / TOAST ──────────────────────── */
+  .error-msg {
+    background: var(--red-dim);
+    border: 1px solid var(--red);
+    border-radius: var(--radius);
+    color: var(--red);
+    font-size: 13px;
+    padding: 10px 12px;
+    margin-top: 8px;
+    display: none;
+  }
+  .error-msg.show { display: block; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--green-dim);
+    border: 1px solid var(--green);
+    border-radius: 8px;
+    color: var(--green);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 18px;
+    z-index: 200;
+    animation: toastIn 0.2s ease;
+    white-space: nowrap;
+  }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+  .doc-number-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--amber-glow);
+    border: 1px solid var(--amber-dim);
+    color: var(--amber);
+    border-radius: 4px;
+    padding: 3px 8px;
+    display: inline-block;
+  }
+
+  /* ─── CONVERT BANNER ──────────────────────── */
+  .convert-banner {
+    background: var(--green-dim);
+    border: 1px solid var(--green);
+    border-radius: var(--radius);
+    color: var(--green);
+    font-size: 13px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    display: none;
+  }
+  .convert-banner.show { display: block; }
+
+  /* ─── SCROLLBAR ──────────────────────────── */
+  #content::-webkit-scrollbar { width: 4px; }
+  #content::-webkit-scrollbar-track { background: var(--bg); }
+  #content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* ─── MISC ────────────────────────────────── */
+  .inline-row { display: flex; gap: 10px; }
+  .inline-row > * { flex: 1; }
+
+  .fade-in { animation: fadeIn 0.3s ease; }
+
+  .no-results {
+    text-align: center; color: var(--text3); font-size: 13px;
+    padding: 16px; border: 1px dashed var(--border); border-radius: var(--radius);
+  }
+
+  .parts-catalog-section { max-height: 340px; overflow-y: auto; padding-right: 2px; }
+  .parts-catalog-section::-webkit-scrollbar { width: 3px; }
+  .parts-catalog-section::-webkit-scrollbar-thumb { background: var(--border2); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--bg4);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+    display: block;
+    color: var(--amber);
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin: 8px 0;
+    user-select: all;
+  }
+
+  @media (min-width: 600px) {
+    .input-grid { grid-template-columns: 1fr 1fr; }
+    .section { padding: 16px 20px; }
+    .tab-btn { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- HEADER -->
+  <header id="app-header">
+    <div class="header-brand">
+      <img id="header-logo" src="" alt="logo">
+      <div>
+        <div class="header-name" id="header-workshop-name">Workshop App</div>
+        <div class="header-tag">Estimate &amp; Invoice</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- TABS -->
+  <div id="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('estimate')">
+      <span class="tab-icon">📋</span> Estimate
+    </button>
+    <button class="tab-btn" onclick="switchTab('invoice')">
+      <span class="tab-icon">🧾</span> Invoice
+    </button>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- ═══════════════ ESTIMATE TAB ═══════════════ -->
+    <div id="tab-estimate" class="tab-panel active">
+
+      <!-- Customer & Vehicle -->
+      <div class="section">
+        <div class="section-title">Customer &amp; Vehicle</div>
+        <div class="input-grid">
+          <div class="input-group">
+            <span class="input-label">Customer Name</span>
+            <input type="text" id="est-customer" placeholder="e.g. Raju Nair">
+          </div>
+          <div class="input-group">
+            <span class="input-label">Date</span>
+            <input type="date" id="est-date">
+          </div>
+          <div class="input-group">
+            <span class="input-label">Vehicle</span>
+            <input type="text" id="est-vehicle" placeholder="e.g. Maruti Swift">
+          </div>
+          <div class="input-group">
+            <span class="input-label">Reg. Number</span>
+            <input type="text" id="est-plate" placeholder="e.g. KL 02 AB 1234">
+          </div>
+        </div>
+      </div>
+
+      <!-- Parts Catalog -->
+      <div class="section">
+        <div class="section-title">Parts Catalog</div>
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="est-search" placeholder="Search parts..." oninput="filterParts('est')">
+        </div>
+        <div class="chips-scroll" id="est-chips"></div>
+        <div class="parts-catalog-section parts-list" id="est-parts-list">
+          <div class="cart-empty">Loading parts catalog…</div>
+        </div>
+      </div>
+
+      <!-- Custom Item -->
+      <div class="section">
+        <div class="section-title">Add Custom Item</div>
+        <div class="custom-item-row">
+          <div class="input-group">
+            <span class="input-label">Part Name</span>
+            <input type="text" id="est-custom-name" placeholder="e.g. Clutch Plate">
+          </div>
+          <div class="input-group">
+            <span class="input-label">Price (₹)</span>
+            <input type="number" id="est-custom-price" placeholder="0" min="0">
+          </div>
+        </div>
+        <button class="btn-secondary" onclick="addCustomItem('est')" style="margin-top:10px;">＋ Add Custom Item</button>
+        <div class="error-msg" id="est-custom-error"></div>
+      </div>
+
+      <!-- Estimate List -->
+      <div class="section">
+        <div class="section-title">Estimate Items</div>
+        <div id="est-cart"></div>
+        <div class="error-msg" id="est-gen-error"></div>
+      </div>
+
+      <!-- Remarks -->
+      <div class="section">
+        <div class="section-title">Remarks</div>
+        <div class="input-group">
+          <textarea id="est-remarks" placeholder="Customer requested OEM parts only, re-inspect after 500km, etc."></textarea>
+        </div>
+      </div>
+
+      <!-- Generate -->
+      <div class="section">
+        <button class="btn-primary" onclick="generatePDF('estimate')">📄 Generate Estimate PDF</button>
+      </div>
+    </div>
+
+    <!-- ═══════════════ INVOICE TAB ═══════════════ -->
+    <div id="tab-invoice" class="tab-panel">
+
+      <!-- Convert Banner -->
+      <div class="section" style="padding-bottom:6px;">
+        <div class="convert-banner" id="inv-convert-banner">
+          ✅ Converted from estimate — prices are editable below.
+        </div>
+      </div>
+
+      <!-- Customer & Vehicle -->
+      <div class="section">
+        <div class="section-title">Customer &amp; Vehicle</div>
+        <div class="input-grid">
+          <div class="input-group">
+            <span class="input-label">Customer Name</span>
+            <input type="text" id="inv-customer" placeholder="e.g. Raju Nair">
+          </div>
+          <div class="input-group">
+            <span class="input-label">Date</span>
+            <input type="date" id="inv-date">
+          </div>
+          <div class="input-group">
+            <span class="input-label">Vehicle</span>
+            <input type="text" id="inv-vehicle" placeholder="e.g. Maruti Swift">
+          </div>
+          <div class="input-group">
+            <span class="input-label">Reg. Number</span>
+            <input type="text" id="inv-plate" placeholder="e.g. KL 02 AB 1234">
+          </div>
+        </div>
+      </div>
+
+      <!-- Parts Catalog -->
+      <div class="section">
+        <div class="section-title">Parts Catalog</div>
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="inv-search" placeholder="Search parts..." oninput="filterParts('inv')">
+        </div>
+        <div class="chips-scroll" id="inv-chips"></div>
+        <div class="parts-catalog-section parts-list" id="inv-parts-list">
+          <div class="cart-empty">Loading parts catalog…</div>
+        </div>
+      </div>
+
+      <!-- Custom Item -->
+      <div class="section">
+        <div class="section-title">Add Custom Item</div>
+        <div class="custom-item-row">
+          <div class="input-group">
+            <span class="input-label">Part Name</span>
+            <input type="text" id="inv-custom-name" placeholder="e.g. Clutch Plate">
+          </div>
+          <div class="input-group">
+            <span class="input-label">Price (₹)</span>
+            <input type="number" id="inv-custom-price" placeholder="0" min="0">
+          </div>
+        </div>
+        <button class="btn-secondary" onclick="addCustomItem('inv')" style="margin-top:10px;">＋ Add Custom Item</button>
+        <div class="error-msg" id="inv-custom-error"></div>
+      </div>
+
+      <!-- Invoice List -->
+      <div class="section">
+        <div class="section-title">Invoice Items</div>
+        <div id="inv-cart"></div>
+        <div class="error-msg" id="inv-gen-error"></div>
+      </div>
+
+      <!-- Labour Charges -->
+      <div class="section">
+        <div class="section-title">Labour Charges</div>
+        <div id="labour-rows"></div>
+        <button class="btn-add-labour" onclick="addLabourRow()">＋ Add Labour Row</button>
+      </div>
+
+      <!-- Totals Breakdown -->
+      <div class="section">
+        <div class="section-title">Totals</div>
+        <div class="totals-breakdown">
+          <div class="totals-row">
+            <span class="totals-row-label">Parts Subtotal</span>
+            <span class="totals-row-value" id="inv-parts-total">₹0</span>
+          </div>
+          <div class="totals-row">
+            <span class="totals-row-label">Labour Subtotal</span>
+            <span class="totals-row-value" id="inv-labour-total">₹0</span>
+          </div>
+          <div class="totals-row grand">
+            <span class="totals-row-label">Grand Total</span>
+            <span class="totals-row-value" id="inv-grand-total">₹0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remarks -->
+      <div class="section">
+        <div class="section-title">Remarks</div>
+        <div class="input-group">
+          <textarea id="inv-remarks" placeholder="Work completed, warranty notes, etc."></textarea>
+        </div>
+      </div>
+
+      <!-- Generate -->
+      <div class="section">
+        <button class="btn-primary" onclick="generatePDF('invoice')">📄 Generate Invoice PDF</button>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let config = {
+  workshop_name: 'Workshop',
+  logo: 'assets/logo.png',
+  address: '',
+  phone: '',
+  email: '',
+  whatsapp: '',
+  currency_symbol: '₹'
+};
+let partsData = [];
+let logoDataUrl = null;
+
+// Carts: est = estimate, inv = invoice
+const carts = {
+  est: [],  // [{id, name, price, qty, custom}]
+  inv: []
+};
+
+// Active category filter
+const activeCategory = { est: null, inv: null };
+
+// Labour rows (invoice only)
+let labourRows = [];
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+  setTodayDate('est-date');
+  setTodayDate('inv-date');
+  await loadConfig();
+  await loadParts();
+  renderCart('est');
+  renderCart('inv');
+  addLabourRow();
+  updateInvoiceTotals();
+});
+
+function setTodayDate(id) {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById(id).value = today;
+}
+
+async function loadConfig() {
+  try {
+    const res = await fetch('config.json');
+    if (!res.ok) throw new Error('Failed');
+    config = await res.json();
+    document.getElementById('header-workshop-name').textContent = config.workshop_name;
+    document.title = config.workshop_name;
+    // Try to load logo
+    try {
+      const logoRes = await fetch(config.logo);
+      if (logoRes.ok) {
+        const blob = await logoRes.blob();
+        logoDataUrl = await blobToDataUrl(blob);
+        const logoEl = document.getElementById('header-logo');
+        logoEl.src = logoDataUrl;
+        logoEl.classList.add('loaded');
+      }
+    } catch(e) {}
+  } catch(e) {
+    console.warn('config.json not found, using defaults');
+  }
+}
+
+async function loadParts() {
+  try {
+    const res = await fetch('parts.json');
+    if (!res.ok) throw new Error('Failed');
+    partsData = await res.json();
+    renderCatalog('est');
+    renderCatalog('inv');
+  } catch(e) {
+    document.getElementById('est-parts-list').innerHTML = '<div class="cart-empty" style="color:var(--red)">Could not load parts catalog. Please check your connection.</div>';
+    document.getElementById('inv-parts-list').innerHTML = '<div class="cart-empty" style="color:var(--red)">Could not load parts catalog. Please check your connection.</div>';
+  }
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(blob);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelectorAll('.tab-btn')[tab === 'estimate' ? 0 : 1].classList.add('active');
+  document.getElementById('content').scrollTop = 0;
+}
+
+// ═══════════════════════════════════════════════════════
+// CATALOG RENDERING
+// ═══════════════════════════════════════════════════════
+function renderCatalog(prefix) {
+  renderChips(prefix);
+  renderPartsList(prefix, '');
+}
+
+function renderChips(prefix) {
+  const container = document.getElementById(prefix + '-chips');
+  container.innerHTML = '';
+  partsData.forEach(cat => {
+    const chip = document.createElement('button');
+    chip.className = 'chip' + (activeCategory[prefix] === cat.category ? ' active' : '');
+    chip.textContent = cat.category;
+    chip.onclick = () => toggleCategory(prefix, cat.category);
+    container.appendChild(chip);
+  });
+}
+
+function toggleCategory(prefix, cat) {
+  activeCategory[prefix] = activeCategory[prefix] === cat ? null : cat;
+  renderChips(prefix);
+  filterParts(prefix);
+}
+
+function filterParts(prefix) {
+  const query = document.getElementById(prefix + '-search').value.toLowerCase().trim();
+  const catFilter = activeCategory[prefix];
+  const list = document.getElementById(prefix + '-parts-list');
+  list.innerHTML = '';
+
+  let hasResults = false;
+  const addedIds = new Set(carts[prefix].filter(i => !i.custom).map(i => i.id));
+
+  partsData.forEach(cat => {
+    if (catFilter && cat.category !== catFilter) return;
+    const matched = cat.items.filter(item =>
+      !query || item.name.toLowerCase().includes(query) || cat.category.toLowerCase().includes(query)
+    );
+    if (!matched.length) return;
+
+    hasResults = true;
+    if (!catFilter || query) {
+      const hdr = document.createElement('div');
+      hdr.className = 'category-header';
+      hdr.textContent = cat.category;
+      list.appendChild(hdr);
+    }
+    matched.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'part-row fade-in';
+      const isAdded = addedIds.has(item.id);
+      row.innerHTML = `
+        <div class="part-info">
+          <div class="part-name">${escHtml(item.name)}</div>
+          <div class="part-price">${config.currency_symbol}${item.price.toLocaleString('en-IN')}</div>
+        </div>
+        <button class="btn-add${isAdded ? ' added' : ''}" data-id="${item.id}" onclick="${isAdded ? '' : `addPartToCart('${prefix}', '${item.id}')`}">
+          ${isAdded ? '✓ Added' : '+ Add'}
+        </button>
+      `;
+      list.appendChild(row);
+    });
+  });
+
+  if (!hasResults) {
+    list.innerHTML = '<div class="no-results">No parts found.</div>';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// CART OPERATIONS
+// ═══════════════════════════════════════════════════════
+function addPartToCart(prefix, partId) {
+  // Find part
+  let found = null;
+  for (const cat of partsData) {
+    const item = cat.items.find(i => i.id === partId);
+    if (item) { found = item; break; }
+  }
+  if (!found) return;
+  if (carts[prefix].find(i => i.id === found.id)) return;
+
+  carts[prefix].push({ id: found.id, name: found.name, price: found.price, qty: 1, custom: false });
+  renderCart(prefix);
+  filterParts(prefix); // refresh Add buttons
+  if (prefix === 'inv') updateInvoiceTotals();
+}
+
+function addCustomItem(prefix) {
+  const nameEl = document.getElementById(prefix + '-custom-name');
+  const priceEl = document.getElementById(prefix + '-custom-price');
+  const errEl = document.getElementById(prefix + '-custom-error');
+  const name = nameEl.value.trim();
+  const price = parseFloat(priceEl.value);
+
+  errEl.classList.remove('show');
+  if (!name || !price || price <= 0) {
+    errEl.textContent = 'Please enter both a name and a price.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  const id = 'CUSTOM_' + Date.now();
+  carts[prefix].push({ id, name, price, qty: 1, custom: true });
+  renderCart(prefix);
+  if (prefix === 'inv') updateInvoiceTotals();
+
+  nameEl.value = '';
+  priceEl.value = '';
+
+  // Show copy dialog
+  const snippet = JSON.stringify({ id: 'CUSTOM' + String(Math.floor(Math.random()*900)+100), name, price });
+  showCopyDialog(snippet);
+}
+
+function removeCartItem(prefix, id) {
+  carts[prefix] = carts[prefix].filter(i => i.id !== id);
+  renderCart(prefix);
+  filterParts(prefix);
+  if (prefix === 'inv') updateInvoiceTotals();
+}
+
+function changeQty(prefix, id, delta) {
+  const item = carts[prefix].find(i => i.id === id);
+  if (!item) return;
+  item.qty = Math.max(1, item.qty + delta);
+  renderCart(prefix);
+  if (prefix === 'inv') updateInvoiceTotals();
+}
+
+function setQty(prefix, id, val) {
+  const item = carts[prefix].find(i => i.id === id);
+  if (!item) return;
+  const n = parseInt(val);
+  item.qty = isNaN(n) || n < 1 ? 1 : n;
+  if (prefix === 'inv') updateInvoiceTotals();
+}
+
+function renderCart(prefix) {
+  const container = document.getElementById(prefix + '-cart');
+  const sym = config.currency_symbol;
+  if (!carts[prefix].length) {
+    container.innerHTML = '<div class="cart-empty">No items added yet.</div>';
+    if (prefix === 'est') {
+      container.innerHTML += `<div class="cart-footer"><span class="total-label">Total</span><span class="total-amount">${sym}0</span></div>`;
+    }
+    return;
+  }
+
+  let total = 0;
+  let html = '';
+  carts[prefix].forEach(item => {
+    const line = item.price * item.qty;
+    total += line;
+    html += `
+      <div class="cart-item">
+        <div class="cart-item-name">
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%">${escHtml(item.name)}</span>
+          <span class="cart-price">${sym}${item.price.toLocaleString('en-IN')}/unit</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-bottom:1px solid var(--border)">
+          <div class="cart-item-controls">
+            <button class="qty-btn" onclick="changeQty('${prefix}','${item.id}',-1)">−</button>
+            <input class="qty-input" type="number" min="1" value="${item.qty}"
+              onchange="setQty('${prefix}','${item.id}',this.value)"
+              oninput="setQty('${prefix}','${item.id}',this.value)">
+            <button class="qty-btn" onclick="changeQty('${prefix}','${item.id}',1)">+</button>
+          </div>
+          <span class="cart-total-cell">${sym}${line.toLocaleString('en-IN')}</span>
+          <button class="btn-remove" onclick="removeCartItem('${prefix}','${item.id}')" title="Remove">🗑</button>
+        </div>
+      </div>
+    `;
+  });
+
+  if (prefix === 'est') {
+    html += `<div class="cart-footer"><span class="total-label">Total</span><span class="total-amount">${sym}${total.toLocaleString('en-IN')}</span></div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════
+// LABOUR ROWS
+// ═══════════════════════════════════════════════════════
+function addLabourRow() {
+  const id = Date.now();
+  labourRows.push({ id, description: '', amount: 0 });
+  renderLabourRows();
+}
+
+function removeLabourRow(id) {
+  labourRows = labourRows.filter(r => r.id !== id);
+  renderLabourRows();
+  updateInvoiceTotals();
+}
+
+function updateLabour(id, field, val) {
+  const row = labourRows.find(r => r.id === id);
+  if (!row) return;
+  if (field === 'amount') row.amount = parseFloat(val) || 0;
+  else row.description = val;
+  updateInvoiceTotals();
+}
+
+function renderLabourRows() {
+  const container = document.getElementById('labour-rows');
+  container.innerHTML = labourRows.map(row => `
+    <div class="labour-row">
+      <input type="text" placeholder="e.g. Engine Service" value="${escHtml(row.description)}"
+        oninput="updateLabour(${row.id},'description',this.value)">
+      <input type="number" placeholder="Amount" min="0" value="${row.amount || ''}"
+        oninput="updateLabour(${row.id},'amount',this.value)">
+      <button class="btn-icon" onclick="removeLabourRow(${row.id})">🗑</button>
+    </div>
+  `).join('');
+}
+
+function updateInvoiceTotals() {
+  const sym = config.currency_symbol;
+  const partsSub = carts.inv.reduce((s, i) => s + i.price * i.qty, 0);
+  const labourSub = labourRows.reduce((s, r) => s + (r.amount || 0), 0);
+  const grand = partsSub + labourSub;
+  document.getElementById('inv-parts-total').textContent = sym + partsSub.toLocaleString('en-IN');
+  document.getElementById('inv-labour-total').textContent = sym + labourSub.toLocaleString('en-IN');
+  document.getElementById('inv-grand-total').textContent = sym + grand.toLocaleString('en-IN');
+}
+
+// ═══════════════════════════════════════════════════════
+// CONVERT ESTIMATE → INVOICE
+// ═══════════════════════════════════════════════════════
+function convertToInvoice() {
+  carts.inv = carts.est.map(i => ({ ...i }));
+  document.getElementById('inv-customer').value = document.getElementById('est-customer').value;
+  document.getElementById('inv-vehicle').value = document.getElementById('est-vehicle').value;
+  document.getElementById('inv-plate').value = document.getElementById('est-plate').value;
+  document.getElementById('inv-date').value = document.getElementById('est-date').value;
+  document.getElementById('inv-remarks').value = document.getElementById('est-remarks').value;
+  document.getElementById('inv-convert-banner').classList.add('show');
+  renderCart('inv');
+  filterParts('inv');
+  updateInvoiceTotals();
+  switchTab('invoice');
+  closeModal();
+}
+
+// ═══════════════════════════════════════════════════════
+// COUNTER HELPERS
+// ═══════════════════════════════════════════════════════
+function getNextNumber(type) {
+  const key = type === 'estimate' ? 'est_counter' : 'inv_counter';
+  const prefix = type === 'estimate' ? 'EST' : 'INV';
+  const current = parseInt(localStorage.getItem(key) || '0');
+  const next = current + 1;
+  localStorage.setItem(key, next);
+  return `${prefix}-${String(next).padStart(3, '0')}`;
+}
+
+// ═══════════════════════════════════════════════════════
+// PDF GENERATION
+// ═══════════════════════════════════════════════════════
+function generatePDF(type) {
+  const prefix = type === 'estimate' ? 'est' : 'inv';
+  const errEl = document.getElementById(prefix + '-gen-error');
+  errEl.classList.remove('show');
+
+  if (!carts[prefix].length) {
+    errEl.textContent = 'Please add at least one part before generating.';
+    errEl.classList.add('show');
+    errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  const docNum = getNextNumber(type);
+  const pdfBlob = buildPDF(type, docNum);
+  showShareModal(type, pdfBlob, docNum);
+}
+
+function buildPDF(type, docNum) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const prefix = type === 'estimate' ? 'est' : 'inv';
+  const sym = config.currency_symbol;
+  const W = 210;
+  const MARGIN = 14;
+  const COL_W = W - MARGIN * 2;
+
+  // Colors
+  const C_DARK = [20, 20, 20];
+  const C_MID = [60, 60, 60];
+  const C_LIGHT = [140, 140, 140];
+  const C_AMBER = [200, 130, 20];
+  const C_WHITE = [255, 255, 255];
+  const C_BG = [248, 248, 246];
+  const C_HEADBG = [30, 30, 30];
+
+  let y = 0;
+
+  // ── HEADER BAND ──────────────────────────
+  doc.setFillColor(...C_HEADBG);
+  doc.rect(0, 0, W, 42, 'F');
+  doc.setFillColor(...C_AMBER);
+  doc.rect(0, 42, W, 2, 'F');
+
+  // Logo
+  let logoX = MARGIN;
+  if (logoDataUrl) {
+    try {
+      doc.addImage(logoDataUrl, 'PNG', MARGIN, 7, 24, 24);
+      logoX = MARGIN + 28;
+    } catch(e) {}
+  }
+
+  // Workshop name & address
+  doc.setTextColor(...C_WHITE);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text(config.workshop_name, logoX, 17);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(200, 200, 200);
+  let addrLines = [];
+  if (config.address) addrLines.push(config.address);
+  const contacts = [];
+  if (config.phone) contacts.push('Ph: ' + config.phone);
+  if (config.email) contacts.push(config.email);
+  if (contacts.length) addrLines.push(contacts.join('  |  '));
+  addrLines.forEach((line, i) => doc.text(line, logoX, 25 + i * 5));
+
+  y = 52;
+
+  // ── DOC TYPE & NUMBER ─────────────────────
+  doc.setFillColor(...C_BG);
+  doc.rect(0, y, W, 22, 'F');
+
+  doc.setTextColor(...C_AMBER);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.text(type === 'estimate' ? 'ESTIMATE' : 'INVOICE', MARGIN, y + 14);
+
+  doc.setTextColor(...C_MID);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text(docNum, W - MARGIN, y + 9, { align: 'right' });
+
+  const dateVal = document.getElementById(prefix + '-date').value;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text('Date: ' + formatDateDisplay(dateVal), W - MARGIN, y + 16, { align: 'right' });
+
+  y += 26;
+
+  // ── CUSTOMER INFO ──────────────────────────
+  doc.setDrawColor(220, 220, 218);
+  doc.setLineWidth(0.3);
+  doc.line(MARGIN, y, W - MARGIN, y);
+
+  y += 6;
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...C_DARK);
+
+  const custName = document.getElementById(prefix + '-customer').value || '—';
+  const vehicle = document.getElementById(prefix + '-vehicle').value || '—';
+  const plate = document.getElementById(prefix + '-plate').value || '—';
+
+  const cols = [
+    { label: 'Customer', value: custName },
+    { label: 'Vehicle', value: vehicle },
+    { label: 'Reg. No.', value: plate }
+  ];
+  const colW3 = COL_W / 3;
+
+  cols.forEach((col, i) => {
+    const cx = MARGIN + i * colW3;
+    doc.setTextColor(...C_LIGHT);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.text(col.label.toUpperCase(), cx, y);
+    doc.setTextColor(...C_DARK);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(col.value, cx, y + 5);
+  });
+
+  y += 14;
+  doc.setDrawColor(220, 220, 218);
+  doc.line(MARGIN, y, W - MARGIN, y);
+  y += 8;
+
+  // ── PARTS TABLE ───────────────────────────
+  doc.setFillColor(...C_HEADBG);
+  doc.rect(MARGIN, y, COL_W, 8, 'F');
+
+  doc.setTextColor(...C_WHITE);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  const tCols = [
+    { label: '#', x: MARGIN + 2, w: 8 },
+    { label: 'PART / DESCRIPTION', x: MARGIN + 10, w: 90 },
+    { label: 'QTY', x: MARGIN + 105, w: 20, right: true },
+    { label: 'UNIT', x: MARGIN + 128, w: 26, right: true },
+    { label: 'TOTAL', x: MARGIN + 155, w: 27, right: true }
+  ];
+  tCols.forEach(col => {
+    if (col.right) doc.text(col.label, col.x + col.w, y + 5.5, { align: 'right' });
+    else doc.text(col.label, col.x, y + 5.5);
+  });
+  y += 8;
+
+  carts[prefix].forEach((item, idx) => {
+    const line = item.price * item.qty;
+    const rowBg = idx % 2 === 0 ? [255, 255, 255] : [250, 249, 247];
+    doc.setFillColor(...rowBg);
+    doc.rect(MARGIN, y, COL_W, 7.5, 'F');
+
+    doc.setTextColor(...C_DARK);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+
+    doc.text(String(idx + 1), MARGIN + 2, y + 5);
+    const nameStr = item.name.length > 45 ? item.name.substring(0, 42) + '...' : item.name;
+    doc.text(nameStr, MARGIN + 10, y + 5);
+    doc.text(String(item.qty), MARGIN + 115, y + 5, { align: 'right' });
+    doc.text(sym + item.price.toLocaleString('en-IN'), MARGIN + 154, y + 5, { align: 'right' });
+    doc.setFont('helvetica', 'bold');
+    doc.text(sym + line.toLocaleString('en-IN'), MARGIN + 182, y + 5, { align: 'right' });
+    y += 7.5;
+
+    // Page break check
+    if (y > 255) {
+      doc.addPage();
+      y = 20;
+    }
+  });
+
+  // Table border
+  doc.setDrawColor(...C_AMBER);
+  doc.setLineWidth(0.5);
+  doc.line(MARGIN, y, W - MARGIN, y);
+  y += 6;
+
+  // Parts total
+  const partsTotal = carts[prefix].reduce((s, i) => s + i.price * i.qty, 0);
+
+  if (type === 'invoice') {
+    // Labour table
+    const labourItems = labourRows.filter(r => r.description || r.amount);
+    if (labourItems.length) {
+      y += 4;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(...C_DARK);
+      doc.text('LABOUR CHARGES', MARGIN, y);
+      y += 6;
+
+      doc.setFillColor(...C_HEADBG);
+      doc.rect(MARGIN, y, COL_W, 7, 'F');
+      doc.setTextColor(...C_WHITE);
+      doc.setFontSize(8);
+      doc.text('DESCRIPTION', MARGIN + 2, y + 4.5);
+      doc.text('AMOUNT', W - MARGIN, y + 4.5, { align: 'right' });
+      y += 7;
+
+      labourItems.forEach((row, idx) => {
+        const rowBg = idx % 2 === 0 ? [255, 255, 255] : [250, 249, 247];
+        doc.setFillColor(...rowBg);
+        doc.rect(MARGIN, y, COL_W, 7.5, 'F');
+        doc.setTextColor(...C_DARK);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.text(row.description || '(Labour)', MARGIN + 2, y + 5);
+        doc.text(sym + (row.amount || 0).toLocaleString('en-IN'), W - MARGIN, y + 5, { align: 'right' });
+        y += 7.5;
+        if (y > 255) { doc.addPage(); y = 20; }
+      });
+
+      doc.setDrawColor(...C_AMBER);
+      doc.line(MARGIN, y, W - MARGIN, y);
+      y += 6;
+    }
+
+    // Invoice totals breakdown
+    const labourTotal = labourRows.reduce((s, r) => s + (r.amount || 0), 0);
+    const grand = partsTotal + labourTotal;
+
+    const totalsData = [
+      { label: 'Parts Subtotal', value: sym + partsTotal.toLocaleString('en-IN') },
+      { label: 'Labour Subtotal', value: sym + labourTotal.toLocaleString('en-IN') },
+    ];
+    totalsData.forEach(row => {
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...C_MID);
+      doc.text(row.label, W - MARGIN - 60, y);
+      doc.text(row.value, W - MARGIN, y, { align: 'right' });
+      y += 6;
+    });
+
+    y += 2;
+    doc.setFillColor(...C_HEADBG);
+    doc.rect(W - MARGIN - 68, y - 3, 68, 10, 'F');
+    doc.setTextColor(...C_AMBER);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('GRAND TOTAL', W - MARGIN - 62, y + 4);
+    doc.text(sym + grand.toLocaleString('en-IN'), W - MARGIN, y + 4, { align: 'right' });
+    y += 14;
+  } else {
+    // Estimate total
+    doc.setFillColor(...C_HEADBG);
+    doc.rect(W - MARGIN - 68, y - 2, 68, 10, 'F');
+    doc.setTextColor(...C_AMBER);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('TOTAL', W - MARGIN - 62, y + 5);
+    doc.text(sym + partsTotal.toLocaleString('en-IN'), W - MARGIN, y + 5, { align: 'right' });
+    y += 14;
+  }
+
+  // Remarks
+  const remarks = document.getElementById(prefix + '-remarks').value.trim();
+  if (remarks) {
+    if (y > 245) { doc.addPage(); y = 20; }
+    doc.setDrawColor(220, 220, 218);
+    doc.setLineWidth(0.3);
+    doc.line(MARGIN, y, W - MARGIN, y);
+    y += 6;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...C_MID);
+    doc.text('REMARKS:', MARGIN, y);
+    y += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...C_DARK);
+    const remarkLines = doc.splitTextToSize(remarks, COL_W);
+    doc.text(remarkLines, MARGIN, y);
+    y += remarkLines.length * 5 + 6;
+  }
+
+  // Footer
+  const footerY = 290;
+  doc.setFillColor(...C_HEADBG);
+  doc.rect(0, footerY - 2, W, 12, 'F');
+  doc.setFillColor(...C_AMBER);
+  doc.rect(0, footerY - 2, W, 1, 'F');
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(180, 180, 180);
+  const footerLeft = config.workshop_name + (config.phone ? '  |  ' + config.phone : '');
+  const footerRight = type === 'estimate' ? 'This is an estimate — prices may vary.' : 'Tax Invoice';
+  doc.text(footerLeft, MARGIN, footerY + 4);
+  doc.text(footerRight, W - MARGIN, footerY + 4, { align: 'right' });
+
+  return doc.output('blob');
+}
+
+function formatDateDisplay(dateStr) {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch(e) { return dateStr; }
+}
+
+// ═══════════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════════
+let currentPdfBlob = null;
+let currentDocNum = null;
+let currentDocType = null;
+
+function showShareModal(type, blob, docNum) {
+  currentPdfBlob = blob;
+  currentDocNum = docNum;
+  currentDocType = type;
+
+  const wName = encodeURIComponent('Please find attached your ' + (type === 'estimate' ? 'estimate' : 'invoice') + ' from ' + config.workshop_name);
+  const canShare = !!(navigator.share && navigator.canShare);
+
+  const convertBtn = type === 'estimate' ? `
+    <button class="modal-action-btn" onclick="convertToInvoice()">
+      <span class="modal-action-icon">🔄</span>
+      <div>
+        <div>Convert to Invoice</div>
+        <div class="modal-action-desc">Carry all data over to the Invoice tab</div>
+      </div>
+    </button>` : '';
+
+  const html = `
+    <div class="modal-overlay" id="share-modal" onclick="closeModalIfOutside(event,'share-modal')">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-title">${type === 'estimate' ? 'Estimate' : 'Invoice'} Ready</div>
+        <div class="modal-sub"><span class="doc-number-badge">${docNum}</span> — Choose an action below</div>
+        <div class="modal-actions">
+          <button class="modal-action-btn" onclick="downloadPDF()">
+            <span class="modal-action-icon">📥</span>
+            <div>
+              <div>Download PDF</div>
+              <div class="modal-action-desc">Save to your device</div>
+            </div>
+          </button>
+          <button class="modal-action-btn" onclick="printPDF()">
+            <span class="modal-action-icon">🖨</span>
+            <div>
+              <div>Print</div>
+              <div class="modal-action-desc">Open print dialog</div>
+            </div>
+          </button>
+          ${canShare ? `
+          <button class="modal-action-btn" onclick="nativeShare()">
+            <span class="modal-action-icon">📤</span>
+            <div>
+              <div>Share</div>
+              <div class="modal-action-desc">Share via WhatsApp, email, etc.</div>
+            </div>
+          </button>` : `
+          <button class="modal-action-btn" onclick="whatsappShare()">
+            <span class="modal-action-icon">💬</span>
+            <div>
+              <div>Share via WhatsApp</div>
+              <div class="modal-action-desc">Downloads PDF, then opens WhatsApp</div>
+            </div>
+          </button>`}
+          ${convertBtn}
+        </div>
+        <button class="modal-cancel" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  `;
+  showModalHTML(html);
+}
+
+function showCopyDialog(snippet) {
+  const html = `
+    <div class="modal-overlay center" id="copy-modal" onclick="closeModalIfOutside(event,'copy-modal')">
+      <div class="modal-sheet center-modal">
+        <div class="modal-title">Add to Catalog?</div>
+        <div class="modal-sub">Copy this snippet and paste it into <strong>parts.json</strong> under the right category when you next update the catalog.</div>
+        <code>${escHtml(snippet)}</code>
+        <div class="modal-btn-row">
+          <button class="btn-outline" onclick="copySnippet(${JSON.stringify(snippet)})">📋 Copy</button>
+          <button class="btn-outline" onclick="closeModal()">Skip</button>
+        </div>
+      </div>
+    </div>
+  `;
+  showModalHTML(html);
+}
+
+function showModalHTML(html) {
+  const existing = document.getElementById('modal-container');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'modal-container';
+  div.innerHTML = html;
+  document.body.appendChild(div);
+}
+
+function closeModal() {
+  const el = document.getElementById('modal-container');
+  if (el) el.remove();
+}
+
+function closeModalIfOutside(e, id) {
+  if (e.target.id === id) closeModal();
+}
+
+function copySnippet(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Copied! Paste into parts.json under the right category.');
+    closeModal();
+  }).catch(() => {
+    showToast('Could not copy — please copy manually.');
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// PDF SHARE ACTIONS
+// ═══════════════════════════════════════════════════════
+function getPDFFilename() {
+  return currentDocNum + '.pdf';
+}
+
+function downloadPDF() {
+  const url = URL.createObjectURL(currentPdfBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = getPDFFilename();
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  showToast('PDF downloaded!');
+}
+
+function printPDF() {
+  const url = URL.createObjectURL(currentPdfBlob);
+  const win = window.open(url, '_blank');
+  if (win) {
+    win.onload = () => { win.focus(); win.print(); };
+  }
+}
+
+async function nativeShare() {
+  const file = new File([currentPdfBlob], getPDFFilename(), { type: 'application/pdf' });
+  try {
+    await navigator.share({
+      title: getPDFFilename(),
+      text: 'Please find attached your document from ' + config.workshop_name,
+      files: [file]
+    });
+  } catch(e) {
+    if (e.name !== 'AbortError') whatsappShare();
+  }
+}
+
+function whatsappShare() {
+  downloadPDF();
+  const text = encodeURIComponent('Please find attached your ' + currentDocType + ' from ' + config.workshop_name + '. Document: ' + currentDocNum);
+  const waNum = (config.whatsapp || '').replace(/[^0-9]/g, '');
+  const url = waNum ? `https://wa.me/${waNum}?text=${text}` : `https://wa.me/?text=${text}`;
+  setTimeout(() => window.open(url, '_blank'), 600);
+  showToast('PDF saved. Now attach it in WhatsApp.');
+}
+
+// ═══════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════
+function showToast(msg) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ═══════════════════════════════════════════════════════
+// UTILITY
+// ═══════════════════════════════════════════════════════
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+</script>
+</body>
+</html>

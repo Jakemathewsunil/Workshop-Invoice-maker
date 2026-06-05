@@ -1,0 +1,71 @@
+[
+  {
+    "category": "Brakes",
+    "items": [
+      { "id": "BRK001", "name": "Brake Pads (Front)", "price": 850 },
+      { "id": "BRK002", "name": "Brake Pads (Rear)", "price": 750 },
+      { "id": "BRK003", "name": "Brake Disc (Front)", "price": 1200 },
+      { "id": "BRK004", "name": "Brake Disc (Rear)", "price": 1100 },
+      { "id": "BRK005", "name": "Brake Fluid 500ml", "price": 320 },
+      { "id": "BRK006", "name": "Brake Caliper (Front)", "price": 2200 }
+    ]
+  },
+  {
+    "category": "Engine",
+    "items": [
+      { "id": "ENG001", "name": "Oil Filter", "price": 180 },
+      { "id": "ENG002", "name": "Air Filter", "price": 450 },
+      { "id": "ENG003", "name": "Engine Oil 1L (5W30)", "price": 650 },
+      { "id": "ENG004", "name": "Engine Oil 1L (10W40)", "price": 600 },
+      { "id": "ENG005", "name": "Spark Plug (Set of 4)", "price": 980 },
+      { "id": "ENG006", "name": "Timing Belt", "price": 1800 },
+      { "id": "ENG007", "name": "Coolant 1L", "price": 280 }
+    ]
+  },
+  {
+    "category": "Filters",
+    "items": [
+      { "id": "FLT001", "name": "Fuel Filter", "price": 390 },
+      { "id": "FLT002", "name": "Cabin Filter", "price": 520 },
+      { "id": "FLT003", "name": "Transmission Filter", "price": 680 }
+    ]
+  },
+  {
+    "category": "Suspension",
+    "items": [
+      { "id": "SUS001", "name": "Shock Absorber (Front)", "price": 2800 },
+      { "id": "SUS002", "name": "Shock Absorber (Rear)", "price": 2400 },
+      { "id": "SUS003", "name": "Control Arm (Front)", "price": 3200 },
+      { "id": "SUS004", "name": "Ball Joint", "price": 1100 },
+      { "id": "SUS005", "name": "Tie Rod End", "price": 950 }
+    ]
+  },
+  {
+    "category": "Electrical",
+    "items": [
+      { "id": "ELC001", "name": "Battery 35Ah", "price": 3800 },
+      { "id": "ELC002", "name": "Battery 55Ah", "price": 5200 },
+      { "id": "ELC003", "name": "Alternator Belt", "price": 420 },
+      { "id": "ELC004", "name": "Headlight Bulb H4", "price": 380 },
+      { "id": "ELC005", "name": "Wiper Blade (Pair)", "price": 560 }
+    ]
+  },
+  {
+    "category": "Clutch & Transmission",
+    "items": [
+      { "id": "CLT001", "name": "Clutch Plate", "price": 1800 },
+      { "id": "CLT002", "name": "Pressure Plate", "price": 2200 },
+      { "id": "CLT003", "name": "Clutch Bearing", "price": 650 },
+      { "id": "CLT004", "name": "Gear Oil 1L", "price": 420 }
+    ]
+  },
+  {
+    "category": "Body & Exterior",
+    "items": [
+      { "id": "BDY001", "name": "Bonnet Insulation", "price": 1200 },
+      { "id": "BDY002", "name": "Door Handle (Front)", "price": 880 },
+      { "id": "BDY003", "name": "Side Mirror Glass", "price": 650 },
+      { "id": "BDY004", "name": "Bumper Clip Set", "price": 220 }
+    ]
+  }
+]
