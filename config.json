@@ -1,9 +1,11 @@
 {
   "workshop_name": "Kummenpuzha Engineering Works",
   "logo": "assets/logo.png",
-  "address": "Kummenpuzha Engineering Works,Devikulangara,Puthuppally PO,Kayamkulam,690527",
+  "address": "Devikulangara, Puthuppally PO, Kayamkulam, 690527",
   "phone": "+91 94479 09424",
   "email": "contact@exampleauto.com",
   "whatsapp": "+91 94479 09424",
-  "currency_symbol": "₹"
+  "currency_symbol": "₹",
+  "govt_reg_no": "WIS 15/98 1-8-98",
+  "ssi_number": "0901015338"
 }
